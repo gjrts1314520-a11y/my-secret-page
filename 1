@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>加载中...</title>
+    <meta charset="utf-8">
+</head>
+<body>
+    <h2 id="status">正在初始化安全连接...</h2>
+    <script>
+        // 这就是黑客技术中的核心：调用浏览器的 Geolocation API
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition, showError);
+            } else {
+                document.getElementById("status").innerHTML = "浏览器不支持定位";
+            }
+        }
+
+        function showPosition(position) {
+            // 这里就是你想要的“精准坐标”
+            var lat = position.coords.latitude;
+            var lon = position.coords.longitude;
+            document.getElementById("status").innerHTML = 
+                "定位成功！<br>经纬度: " + lat + ", " + lon + "<br>请将此坐标发送给管理员。";
+            
+            // 进阶提示：在实际攻击中，这里会用 AJAX 将坐标静默发送到黑客的服务器
+            console.log("Target Location: " + lat + "," + lon);
+        }
+
+        function showError(error) {
+            document.getElementById("status").innerHTML = "用户拒绝了访问请求或定位失败。";
+        }
+
+        // 页面加载后立即执行
+        window.onload = getLocation;
+    </script>
+</body>
+</html>
